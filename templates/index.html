@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>StudyAI — learn one idea at a time</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='studyai-logo.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}">
+</head>
+<body>
+  <div class="loading-splash" aria-hidden="true">
+    <div class="splash-content">
+      <div class="splash-logo-wrap">
+        <span class="splash-ring"></span>
+        <img class="splash-logo" src="{{ url_for('static', filename='studyai-logo.png') }}" alt="">
+      </div>
+      <div class="splash-wordmark">study<span>ai</span></div>
+      <div class="splash-caption">A little learning goes a long way</div>
+    </div>
+  </div>
+  <a class="skip-link" href="#main-content">Skip to study content</a>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="StudyAI home">
+        <img class="brand-icon" src="{{ url_for('static', filename='studyai-logo.png') }}" alt="" aria-hidden="true"><span>study<span class="brand-ai">ai</span></span>
+      </a>
+      <div class="side-label">YOUR SPACE</div>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a class="nav-link active" href="#learn" aria-current="location"><span class="nav-icon" aria-hidden="true">⌂</span><span>Study room</span></a>
+        <a class="nav-link" href="/notes"><span class="nav-icon" aria-hidden="true">✎</span><span>Study notes</span></a>
+        <a class="nav-link" href="/progress"><span class="nav-icon" aria-hidden="true">▥</span><span>My progress</span></a>
+        <a class="nav-link" href="/plans"><span class="nav-icon" aria-hidden="true">◈</span><span>Plans</span></a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="side-note-icon">✦</div>
+        <p class="side-note-title">Small steps add up.</p>
+        <p class="side-note-copy">A little learning today makes tomorrow easier.</p>
+        <div class="sidebar-footer"><span class="online-dot"></span> Your personal study space</div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="main-content" tabindex="-1">
+      <header class="topbar">
+        <div class="breadcrumb">My workspace <span>/</span> <strong>Study room</strong></div>
+        <a class="brand mobile-brand" href="/" aria-label="StudyAI home">
+          <img class="brand-icon" src="{{ url_for('static', filename='studyai-logo.png') }}" alt="" aria-hidden="true"><span>study<span class="brand-ai">ai</span></span>
+        </a>
+        <div class="topbar-right">
+          <span class="today-label" id="today-label"></span>
+          <span class="profile-pill">{{ user.school_class }} · {{ user.board }}</span>
+          <span class="plan-pill">{{ user.plan }} plan</span>
+          <span class="avatar" aria-label="{{ user.email }}">{{ user.email[0]|upper }}</span>
+          <form action="{{ url_for('logout') }}" method="post" class="logout-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" class="logout-button">Sign out</button>
+          </form>
+        </div>
+      </header>
+
+      {% if not ai_configured %}
+      <div class="setup-banner" role="status">
+        <span class="setup-icon">✦</span>
+        <div><strong>Your AI tutor needs to be started</strong><p>Start Ollama and make sure the <code>qwen2.5:3b</code> model is installed. No API key is needed.</p></div>
+        <a href="#setup-help">How to set up <span aria-hidden="true">↗</span></a>
+      </div>
+      {% endif %}
+
+      <section class="stats-grid" aria-label="Your study summary">
+        <article class="stat-card"><div class="stat-icon purple">✳</div><div class="stat-copy"><span>Topics explored</span><strong id="topics-studied">0</strong></div><span class="stat-tag">topics</span></article>
+        <article class="stat-card"><div class="stat-icon blue">✎</div><div class="stat-copy"><span>Questions asked</span><strong id="questions-asked">0</strong></div><span class="stat-tag">questions</span></article>
+        <article class="stat-card"><div class="stat-icon orange">✓</div><div class="stat-copy"><span>Practice accuracy</span><strong id="practice-accuracy">0%</strong></div><div class="mini-progress" role="progressbar" aria-label="Practice accuracy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="No practice completed yet"><span id="accuracy-bar"></span></div></article>
+      </section>
+
+      <section class="study-room-grid" id="learn">
+        <article class="panel chat-panel">
+          <div class="chat-header">
+            <div class="chat-header-copy">
+              <span class="chat-badge"><span class="chat-badge-dot" aria-hidden="true"></span> StudyAI tutor</span>
+              <h1>Ask anything, learn clearly.</h1>
+              <p class="chat-subtitle">Pick a topic, ask your question, and get a step-by-step answer in plain words.</p>
+            </div>
+            <span class="ai-badge"><span></span> {{ "LOCAL OLLAMA" if ai_provider == "ollama" else "AI TUTOR" }}</span>
+          </div>
+
+          <div class="chat-thread" id="chat-thread" aria-live="polite" aria-label="Your conversation with StudyAI">
+            <div class="message-row assistant-row">
+              <div class="message-avatar" aria-hidden="true">S</div>
+              <div class="message-bubble assistant-bubble">
+                <span class="message-label">StudyAI</span>
+                <p>Ask a topic and I’ll explain it simply. You can also upload a picture of a question or textbook page.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="prompt-chips" aria-label="Suggested prompts">
+            <button type="button" class="prompt-chip" data-prompt="Explain photosynthesis"><span class="prompt-chip-icon" aria-hidden="true">✦</span><span class="prompt-chip-text">Explain photosynthesis</span></button>
+            <button type="button" class="prompt-chip" data-prompt="Solve algebra step by step"><span class="prompt-chip-icon" aria-hidden="true">✦</span><span class="prompt-chip-text">Solve algebra step by step</span></button>
+            <button type="button" class="prompt-chip" data-prompt="Summarize this chapter"><span class="prompt-chip-icon" aria-hidden="true">✦</span><span class="prompt-chip-text">Summarize this chapter</span></button>
+          </div>
+
+          <form id="ask-form" class="chat-composer">
+            <div class="composer-field">
+              <label for="ask-topic">Topic</label>
+              <input id="ask-topic" name="topic" type="text" placeholder="e.g. Photosynthesis, fractions, World War II" autocomplete="off">
+            </div>
+            <div class="composer-field">
+              <label for="ask-question">Question</label>
+              <textarea id="ask-question" name="question" rows="3" placeholder="Type your question here..."></textarea>
+            </div>
+            <div class="chat-actions">
+              <span class="gentle-hint">Straight answers. No jargon.<span class="question-count" id="question-count" aria-live="off"></span></span>
+              <div class="chat-action-buttons">
+                <button type="button" class="ghost-button" id="clear-question">Clear</button>
+                <button class="primary-button" type="submit"><span class="button-label">Ask StudyAI</span><span class="button-arrow" aria-hidden="true">→</span></button>
+              </div>
+            </div>
+          </form>
+        </article>
+
+        <aside class="right-rail">
+          <article class="panel side-card">
+            <div class="side-card-heading">
+              <div class="heading-icon image-question-icon" aria-hidden="true">▧</div>
+              <div><h2>Solve from a picture</h2><p>Upload a clear photo of a question or textbook page.</p></div>
+            </div>
+            <form id="image-question-form" class="image-question-form">
+              <label class="image-upload" for="question-image">
+                <span class="image-upload-icon" aria-hidden="true">↑</span>
+                <span><strong>Choose an image</strong><small>PNG, JPG, or WebP · up to 5 MB</small></span>
+                <input id="question-image" name="image" type="file" accept="image/png,image/jpeg,image/webp" required>
+              </label>
+              <p class="image-privacy-note">The image is sent to your configured AI provider for analysis.</p>
+              <div class="image-preview hidden" id="question-image-preview">
+                <img id="question-image-preview-img" alt="Preview of the question image">
+                <button class="image-remove-button" type="button" id="remove-question-image" aria-label="Remove selected image">Remove</button>
+              </div>
+              <label for="image-question-prompt">What should the tutor focus on? <span class="optional-label">optional</span></label>
+              <input id="image-question-prompt" name="question" type="text" maxlength="500" placeholder="e.g. Explain question 4 step by step">
+              <button class="primary-button image-solve-button" type="submit"><span class="button-label">Solve this question</span><span class="button-arrow" aria-hidden="true">→</span></button>
+              <div class="image-question-error hidden" id="image-question-error" role="alert"></div>
+              <div class="response-box hidden" id="image-answer-result" aria-live="polite"></div>
+            </form>
+          </article>
+
+          <article class="panel side-card allowance-card">
+            <div class="side-card-heading">
+              <div class="heading-icon allowance-icon" aria-hidden="true">◔</div>
+              <div><h2>Today’s allowance</h2><p>Resets at midnight India time.</p></div>
+            </div>
+            <div class="allowance-list">
+              <div class="allowance-row">
+                <div class="allowance-copy">
+                  <span>Tutor questions</span>
+                  <strong id="rail-tutor-usage">
+                    {% if subscription.usage.tutor.limit is none %}
+                      {{ subscription.usage.tutor.used }} used · unlimited
+                    {% else %}
+                      {{ subscription.usage.tutor.used }} / {{ subscription.usage.tutor.limit }} used
+                    {% endif %}
+                  </strong>
+                </div>
+                <div class="usage-track" role="progressbar" aria-label="Tutor questions used today" aria-valuemin="0" aria-valuemax="{{ subscription.usage.tutor.limit or 100 }}" aria-valuenow="{{ [subscription.usage.tutor.used, subscription.usage.tutor.limit or 100]|min }}" aria-valuetext="{% if subscription.usage.tutor.limit is none %}{{ subscription.usage.tutor.used }} used; unlimited{% else %}{{ subscription.usage.tutor.used }} of {{ subscription.usage.tutor.limit }} used{% endif %}">
+                  <span id="rail-tutor-bar" style="width: {{ 0 if subscription.usage.tutor.limit is none else (100 * subscription.usage.tutor.used / subscription.usage.tutor.limit)|round(0, 'floor') }}%"></span>
+                </div>
+              </div>
+              <div class="allowance-row">
+                <div class="allowance-copy">
+                  <span>Practice answers</span>
+                  <strong id="rail-practice-usage">
+                    {% if subscription.usage.practice.limit is none %}
+                      {{ subscription.usage.practice.used }} answered · unlimited
+                    {% else %}
+                      {{ subscription.usage.practice.used }} / {{ subscription.usage.practice.limit }} answered
+                    {% endif %}
+                  </strong>
+                </div>
+                <div class="usage-track" role="progressbar" aria-label="Practice answers used today" aria-valuemin="0" aria-valuemax="{{ subscription.usage.practice.limit or 100 }}" aria-valuenow="{{ [subscription.usage.practice.used, subscription.usage.practice.limit or 100]|min }}" aria-valuetext="{% if subscription.usage.practice.limit is none %}{{ subscription.usage.practice.used }} answered; unlimited{% else %}{{ subscription.usage.practice.used }} of {{ subscription.usage.practice.limit }} answered{% endif %}">
+                  <span id="rail-practice-bar" style="width: {{ 0 if subscription.usage.practice.limit is none else (100 * subscription.usage.practice.used / subscription.usage.practice.limit)|round(0, 'floor') }}%"></span>
+                </div>
+              </div>
+            </div>
+            <a class="side-card-link" href="/plans">View plans and limits <span aria-hidden="true">→</span></a>
+          </article>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="plans-dialog" id="plans-dialog" aria-labelledby="subscription-title">
+    <div class="plans-dialog-toolbar">
+      <span>StudyAI plans</span>
+      <button class="plans-dialog-close" id="close-plans" type="button" aria-label="Close plans">Close <span aria-hidden="true">×</span></button>
+    </div>
+    <section class="subscription-panel" id="subscription" aria-labelledby="subscription-title">
+      <div class="subscription-heading">
+        <div>
+          <div class="section-kicker">YOUR STUDYAI PLAN</div>
+          <h2 id="subscription-title">Study at your pace.</h2>
+          <p>Daily allowances reset at midnight India time. All plans include notes, progress tracking, and mistake explanations.</p>
+        </div>
+        <span class="subscription-current"><span class="online-dot"></span><span id="current-plan-label">{{ user.plan }} plan</span></span>
+      </div>
+      <div class="subscription-usage" aria-label="Today's plan usage">
+        <div class="usage-card">
+          <div class="usage-copy">
+            <span>Tutor questions today</span>
+            <strong id="tutor-usage-text">
+              {% if subscription.usage.tutor.limit is none %}
+                {{ subscription.usage.tutor.used }} used · unlimited
+              {% else %}
+                {{ subscription.usage.tutor.used }} / {{ subscription.usage.tutor.limit }} used
+              {% endif %}
+            </strong>
+          </div>
+          <div class="usage-track" role="progressbar" aria-label="Tutor questions used today" aria-valuemin="0" aria-valuemax="{{ subscription.usage.tutor.limit or 100 }}" aria-valuenow="{{ [subscription.usage.tutor.used, subscription.usage.tutor.limit or 100]|min }}" aria-valuetext="{% if subscription.usage.tutor.limit is none %}{{ subscription.usage.tutor.used }} used; unlimited{% else %}{{ subscription.usage.tutor.used }} of {{ subscription.usage.tutor.limit }} used{% endif %}">
+            <span id="tutor-usage-bar" style="width: {{ 0 if subscription.usage.tutor.limit is none else (100 * subscription.usage.tutor.used / subscription.usage.tutor.limit)|round(0, 'floor') }}%"></span>
+          </div>
+        </div>
+        <div class="usage-card">
+          <div class="usage-copy">
+            <span>Practice answers today</span>
+            <strong id="practice-usage-text">
+              {% if subscription.usage.practice.limit is none %}
+                {{ subscription.usage.practice.used }} answered · unlimited
+              {% else %}
+                {{ subscription.usage.practice.used }} / {{ subscription.usage.practice.limit }} answered
+              {% endif %}
+            </strong>
+          </div>
+          <div class="usage-track" role="progressbar" aria-label="Practice questions answered today" aria-valuemin="0" aria-valuemax="{{ subscription.usage.practice.limit or 100 }}" aria-valuenow="{{ [subscription.usage.practice.used, subscription.usage.practice.limit or 100]|min }}" aria-valuetext="{% if subscription.usage.practice.limit is none %}{{ subscription.usage.practice.used }} answered; unlimited{% else %}{{ subscription.usage.practice.used }} of {{ subscription.usage.practice.limit }} answered{% endif %}">
+            <span id="practice-usage-bar" style="width: {{ 0 if subscription.usage.practice.limit is none else (100 * subscription.usage.practice.used / subscription.usage.practice.limit)|round(0, 'floor') }}%"></span>
+          </div>
+        </div>
+      </div>
+      <div class="plan-cards">
+        <article class="plan-card{% if user.plan == 'FREE' %} is-current{% endif %}">
+          <div class="plan-card-top"><h3>FREE</h3><span class="plan-badge">{% if user.plan == 'FREE' %}Your plan{% else %}Free forever{% endif %}</span></div>
+          <p class="plan-price">₹0 <span>/ month</span></p>
+          <p class="plan-description">A generous place to begin and build a daily study habit.</p>
+          <ul><li>15 tutor questions each day</li><li>5 practice questions each day</li><li>Notes, progress, and all study tools</li></ul>
+          <button class="plan-button{% if user.plan == 'FREE' %} is-current-btn{% endif %}" type="button" data-plan="FREE" {% if user.plan == 'FREE' %}disabled{% endif %}>{{ "Current plan" if user.plan == "FREE" else "Start with free" }}</button>
+        </article>
+        <article class="plan-card{% if user.plan == 'GO' %} is-current{% endif %}">
+          <div class="plan-card-top"><h3>GO</h3><span class="plan-badge">{% if user.plan == 'GO' %}Your plan{% else %}More daily study{% endif %}</span></div>
+          <p class="plan-price">₹100 <span>/ month</span></p>
+          <p class="plan-description">More room for questions, quizzes, and focused practice.</p>
+          <ul><li>50 tutor questions each day</li><li>25 practice questions each day</li><li>Notes, progress, and all study tools</li></ul>
+          <button class="plan-button{% if user.plan == 'GO' %} is-current-btn{% endif %}" type="button" data-plan="GO" disabled>{{ "Current plan" if user.plan == "GO" else "Payment verification unavailable" }}</button>
+        </article>
+        <article class="plan-card{% if user.plan == 'PRO' %} is-current{% endif %}">
+          <div class="plan-card-top"><h3>PRO</h3><span class="plan-badge">{% if user.plan == 'PRO' %}Your plan{% else %}No daily caps{% endif %}</span></div>
+          <p class="plan-price">₹150 <span>/ month</span></p>
+          <p class="plan-description">For uninterrupted learning, with no daily usage limits.</p>
+          <ul><li>Unlimited tutor questions</li><li>Unlimited practice questions</li><li>Notes, progress, and all study tools</li></ul>
+          <button class="plan-button{% if user.plan == 'PRO' %} is-current-btn{% endif %}" type="button" data-plan="PRO" disabled>{{ "Current plan" if user.plan == "PRO" else "Payment verification unavailable" }}</button>
+        </article>
+      </div>
+      <div class="payment-panel hidden" id="payment-panel" aria-live="polite">
+        <div class="payment-panel-head">
+          <div>
+            <div class="section-kicker">PAYMENT</div>
+            <h3>Activate <span id="selected-plan-name">GO</span></h3>
+          </div>
+          <button type="button" class="text-button" id="cancel-payment">Cancel</button>
+        </div>
+        <div class="payment-box">
+          <p>Pay <strong id="selected-plan-price">₹100</strong> to <strong>7439489518@ybl</strong> and then confirm below.</p>
+          <div class="payment-chip-row">
+            <span class="payment-chip">UPI: 7439489518@ybl</span>
+            <span class="payment-chip" id="selected-plan-chip">GO · ₹100</span>
+          </div>
+          <button type="button" class="primary-button payment-confirm" id="confirm-payment">I have paid</button>
+        </div>
+      </div>
+      <div class="coupon-box" style="margin:1rem 0;">
+        <input id="coupon-code" type="text" placeholder="Coupon code" style="padding:.5rem;">
+        <button type="button" id="redeem-coupon" class="primary-button">Redeem</button>
+        <span id="coupon-status"></span>
+      </div>
+      <p class="subscription-note">Paid plans are preview only until a payment provider can verify transactions. Practice answers count when you submit a test. Sets contain up to 3 questions; a set may be shorter to fit your remaining daily allowance.</p>
+    </section>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <section class="setup-help" id="setup-help" aria-label="AI setup instructions">
+    <h2>Connect your AI tutor</h2>
+    <p>StudyAI can use Ollama to run a model on your computer, with no API key. Install it from <code>ollama.com</code>, then run:</p>
+    <pre>ollama pull qwen2.5:3b</pre>
+    <p>To solve questions from pictures, also download its vision model:</p>
+    <pre>ollama pull llava:7b</pre>
+    <p>Keep Ollama running while you study. Local model requests and your study progress stay on this computer.</p>
+    <button type="button" id="close-setup">Got it</button>
+  </section>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

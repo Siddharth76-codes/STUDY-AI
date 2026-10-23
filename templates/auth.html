@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080d15">
+  <title>{{ "Create your account" if register else "Welcome back" }} · StudyAI</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='studyai-logo.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}">
+</head>
+<body class="auth-page">
+  <div class="loading-splash" aria-hidden="true">
+    <div class="splash-content">
+      <div class="splash-logo-wrap">
+        <span class="splash-ring"></span>
+        <img class="splash-logo" src="{{ url_for('static', filename='studyai-logo.png') }}" alt="">
+      </div>
+      <div class="splash-wordmark">study<span>ai</span></div>
+      <div class="splash-caption">A little learning goes a long way</div>
+    </div>
+  </div>
+  <main class="auth-shell">
+    <a class="brand auth-brand" href="{{ url_for('login') }}" aria-label="StudyAI">
+      <img class="brand-icon" src="{{ url_for('static', filename='studyai-logo.png') }}" alt="" aria-hidden="true"><span>study<span class="brand-ai">ai</span></span>
+    </a>
+    <section class="auth-card">
+      <div class="auth-kicker">YOUR PERSONAL STUDY SPACE</div>
+      <h1>{{ "Start learning your way." if register else "Good to see you again." }}</h1>
+      <p class="auth-intro">
+        {% if register %}
+          Create an account and choose your class and board so explanations feel right for you.
+        {% else %}
+          Sign in to pick up where you left off.
+        {% endif %}
+      </p>
+
+      {% if error %}
+      <div class="auth-error" role="alert">{{ error }}</div>
+      {% endif %}
+
+      <form class="auth-form" method="post" action="{{ url_for('register' if register else 'login') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="254"
+               placeholder="you@example.com" value="{{ request.form.get('email', '') }}" required>
+
+        <label for="password">Password</label>
+        <div class="password-input-wrap">
+          <input id="password" name="password" type="password"
+                 autocomplete="{{ 'new-password' if register else 'current-password' }}"
+                 minlength="{{ 12 if register else 1 }}" maxlength="256"
+                 aria-describedby="{{ 'password-help' if register else '' }}"
+                 placeholder="{{ 'At least 12 characters' if register else 'Your password' }}" required>
+          <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        {% if register %}
+        <p class="auth-field-hint" id="password-help">Use at least 12 characters.</p>
+        {% endif %}
+
+        {% if register %}
+        <label for="password-confirm">Confirm password</label>
+        <div class="password-input-wrap">
+          <input id="password-confirm" name="password_confirm" type="password"
+                 autocomplete="new-password" minlength="12" maxlength="256"
+                 aria-describedby="password-match-hint"
+                 placeholder="Enter your password again" required>
+          <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        <p class="auth-field-hint" id="password-match-hint" aria-live="polite"></p>
+
+        <div class="auth-select-grid">
+          <div>
+            <label for="school-class">Your class</label>
+            <select id="school-class" name="school_class" required>
+              <option value="" disabled {% if not request.form.get('school_class') %}selected{% endif %}>Select class</option>
+              {% for school_class in class_options %}
+              <option value="{{ school_class }}" {% if request.form.get('school_class') == school_class %}selected{% endif %}>{{ school_class }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="board">Your board</label>
+            <select id="board" name="board" required>
+              <option value="" disabled {% if not request.form.get('board') %}selected{% endif %}>Select board</option>
+              {% for board_name in board_options %}
+              <option value="{{ board_name }}" {% if request.form.get('board') == board_name %}selected{% endif %}>{{ board_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <p class="auth-note">Your profile guides the tutor's explanations. It does not train or fine-tune an AI model.</p>
+        {% endif %}
+
+        <button class="primary-button auth-submit" type="submit">
+          <span class="button-label">{{ "Create my account" if register else "Sign in" }}</span><span class="button-arrow" aria-hidden="true">→</span>
+        </button>
+      </form>
+      <p class="auth-switch">
+        {{ "Already have an account?" if register else "New to StudyAI?" }}
+        <a href="{{ url_for('login' if register else 'register') }}">{{ "Sign in" if register else "Create an account" }}</a>
+      </p>
+    </section>
+    <p class="auth-footer">Made for curious minds <span>✦</span> Keep learning at your own pace.</p>
+  </main>
+  <script src="{{ url_for('static', filename='auth.js') }}" defer></script>
+</body>
+</html>

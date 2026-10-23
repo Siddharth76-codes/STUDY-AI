@@ -1,0 +1,7 @@
+.env
+.session_secret
+__pycache__/
+*.py[cod]
+studyai.db
+.venv/
+venv/
