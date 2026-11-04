@@ -23,7 +23,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / ".env")
-DATABASE_PATH = Path(os.environ.get("STUDYAI_DATABASE", BASE_DIR / "studyai.db"))
+default_database_path = Path("/tmp/studyai.db") if os.environ.get("VERCEL") else BASE_DIR / "studyai.db"
+DATABASE_PATH = Path(os.environ.get("STUDYAI_DATABASE", default_database_path))
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET") or ""
 if not app.secret_key:
