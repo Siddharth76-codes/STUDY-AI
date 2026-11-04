@@ -378,7 +378,7 @@ def add_security_headers(response):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; "
         "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; "
         "script-src 'self'; "
-        "connect-src 'self' http://127.0.0.1:11434 https://api.groq.com https://api.openai.com; "
+        "connect-src 'self' http://127.0.0.1:11434 https://ollama.com https://api.groq.com https://api.openai.com; "
         "frame-ancestors 'none'; "
         "object-src 'none'; "
         "base-uri 'self'; "
@@ -438,11 +438,10 @@ def call_ai(system_prompt, user_prompt, *, image=None):
     elif provider == "openai":
         api_key = os.environ.get("OPENAI_API_KEY")
     else:
-        api_key = None
-    if provider != "ollama" and not api_key:
+        api_key = os.environ.get("OLLAMA_API_KEY")
+    if not api_key:
         raise RuntimeError(
-            f"Add the API key for {provider.title()} to your .env file, "
-            "or set STUDYAI_PROVIDER=ollama to use a local model."
+            f"Add the API key for {provider.title()} to your .env file."
         )
 
     model_variable = {
@@ -504,7 +503,7 @@ def call_ai(system_prompt, user_prompt, *, image=None):
     )
     if not base_url:
         base_url = {
-            "ollama": "http://127.0.0.1:11434/v1",
+            "ollama": "https://ollama.com/v1",
             "aimlapi": "https://api.aimlapi.com/v1",
             "gemini": "https://generativelanguage.googleapis.com/v1beta/openai",
             "groq": "https://api.groq.com/openai/v1",
@@ -512,7 +511,11 @@ def call_ai(system_prompt, user_prompt, *, image=None):
         }[provider]
     headers = {"Content-Type": "application/json"}
     if api_key:
+        headers["Authorization"] = "Bearer " + api_key
+    if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
+    if api_key:
+        headers["Authorization"] = "Bearer " + api_key
     req = urllib.request.Request(
         base_url.rstrip("/") + "/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
