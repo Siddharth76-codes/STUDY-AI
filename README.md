@@ -43,6 +43,13 @@ python app.py
 
 Open <http://127.0.0.1:5000> in your browser. Your study progress is stored locally in `studyai.db`. Keep `.env` private; it is excluded from version control.
 
+## Vercel
+
+The repository includes a Vercel entrypoint in `api/index.py` and deployment configuration in `vercel.json`.
+Before deploying, set a hosted Ollama-compatible `OLLAMA_BASE_URL` and a strong `SESSION_SECRET` in Vercel.
+Vercel's serverless filesystem is temporary, so SQLite data will not persist between instances; use a hosted
+database for production accounts and progress.
+
 In the tutor panel, upload a PNG, JPG, or WebP image up to 5 MB and optionally add what you want explained. Each successful image solution uses one daily tutor question. The default local image model is `llava:7b`; set `OLLAMA_VISION_MODEL` in `.env` to use another Ollama vision model. For cloud providers, set `GROQ_VISION_MODEL` or `OPENAI_VISION_MODEL` to a vision-capable model. Images are sent to the configured AI provider for analysis.
 
 Ollama must be running while you study. If StudyAI cannot connect, open the Ollama app or run `ollama serve`. Every AI feature uses this local Ollama model, and progress is stored locally in `studyai.db`. The model name and local endpoint can be customized in `.env`.
