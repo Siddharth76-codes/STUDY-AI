@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='ui.css') }}">
 </head>
-<body>
+<body class="study-room-page">
   <div class="loading-splash" aria-hidden="true">
     <div class="splash-content">
       <div class="splash-logo-wrap">
@@ -71,10 +71,13 @@
       </div>
       {% endif %}
 
-      <section class="stats-grid" aria-label="Your study summary">
-        <article class="stat-card"><div class="stat-icon purple">✳</div><div class="stat-copy"><span>Topics explored</span><strong id="topics-studied">0</strong></div><span class="stat-tag">topics</span></article>
-        <article class="stat-card"><div class="stat-icon blue">✎</div><div class="stat-copy"><span>Questions asked</span><strong id="questions-asked">0</strong></div><span class="stat-tag">questions</span></article>
-        <article class="stat-card"><div class="stat-icon orange">✓</div><div class="stat-copy"><span>Practice accuracy</span><strong id="practice-accuracy">0%</strong></div><div class="mini-progress" role="progressbar" aria-label="Practice accuracy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="No practice completed yet"><span id="accuracy-bar"></span></div></article>
+      <section class="study-room-intro" aria-labelledby="study-room-title">
+        <div>
+          <div class="eyebrow"><span class="sparkle" aria-hidden="true">✦</span> YOUR STUDY SPACE</div>
+          <h1 id="study-room-title">Ask a question.</h1>
+          <p>Get a clear answer, one idea at a time.</p>
+        </div>
+        <div class="intro-orbit" aria-hidden="true"><span>✦</span></div>
       </section>
 
       <section class="study-room-grid" id="learn">
@@ -82,8 +85,8 @@
           <div class="chat-header">
             <div class="chat-header-copy">
               <span class="chat-badge"><span class="chat-badge-dot" aria-hidden="true"></span> StudyAI tutor</span>
-              <h1>Ask anything, learn clearly.</h1>
-              <p class="chat-subtitle">Pick a topic, ask your question, and get a step-by-step answer in plain words.</p>
+              <h1>Start with one question.</h1>
+              <p class="chat-subtitle">Pick a topic and get a step-by-step answer in plain words.</p>
             </div>
             <span class="ai-badge"><span></span> {{ "LOCAL OLLAMA" if ai_provider == "ollama" else "AI TUTOR" }}</span>
           </div>
@@ -93,15 +96,9 @@
               <div class="message-avatar" aria-hidden="true">S</div>
               <div class="message-bubble assistant-bubble">
                 <span class="message-label">StudyAI</span>
-                <p>Ask a topic and I’ll explain it simply. You can also upload a picture of a question or textbook page.</p>
+                <p>Ask anything and I’ll explain it simply.</p>
               </div>
             </div>
-          </div>
-
-          <div class="prompt-chips" aria-label="Suggested prompts">
-            <button type="button" class="prompt-chip" data-prompt="Explain photosynthesis"><span class="prompt-chip-icon" aria-hidden="true">✦</span><span class="prompt-chip-text">Explain photosynthesis</span></button>
-            <button type="button" class="prompt-chip" data-prompt="Solve algebra step by step"><span class="prompt-chip-icon" aria-hidden="true">✦</span><span class="prompt-chip-text">Solve algebra step by step</span></button>
-            <button type="button" class="prompt-chip" data-prompt="Summarize this chapter"><span class="prompt-chip-icon" aria-hidden="true">✦</span><span class="prompt-chip-text">Summarize this chapter</span></button>
           </div>
 
           <form id="ask-form" class="chat-composer">
@@ -123,71 +120,6 @@
           </form>
         </article>
 
-        <aside class="right-rail">
-          <article class="panel side-card">
-            <div class="side-card-heading">
-              <div class="heading-icon image-question-icon" aria-hidden="true">▧</div>
-              <div><h2>Solve from a picture</h2><p>Upload a clear photo of a question or textbook page.</p></div>
-            </div>
-            <form id="image-question-form" class="image-question-form">
-              <label class="image-upload" for="question-image">
-                <span class="image-upload-icon" aria-hidden="true">↑</span>
-                <span><strong>Choose an image</strong><small>PNG, JPG, or WebP · up to 5 MB</small></span>
-                <input id="question-image" name="image" type="file" accept="image/png,image/jpeg,image/webp" required>
-              </label>
-              <p class="image-privacy-note">The image is sent to your configured AI provider for analysis.</p>
-              <div class="image-preview hidden" id="question-image-preview">
-                <img id="question-image-preview-img" alt="Preview of the question image">
-                <button class="image-remove-button" type="button" id="remove-question-image" aria-label="Remove selected image">Remove</button>
-              </div>
-              <label for="image-question-prompt">What should the tutor focus on? <span class="optional-label">optional</span></label>
-              <input id="image-question-prompt" name="question" type="text" maxlength="500" placeholder="e.g. Explain question 4 step by step">
-              <button class="primary-button image-solve-button" type="submit"><span class="button-label">Solve this question</span><span class="button-arrow" aria-hidden="true">→</span></button>
-              <div class="image-question-error hidden" id="image-question-error" role="alert"></div>
-              <div class="response-box hidden" id="image-answer-result" aria-live="polite"></div>
-            </form>
-          </article>
-
-          <article class="panel side-card allowance-card">
-            <div class="side-card-heading">
-              <div class="heading-icon allowance-icon" aria-hidden="true">◔</div>
-              <div><h2>Today’s allowance</h2><p>Resets at midnight India time.</p></div>
-            </div>
-            <div class="allowance-list">
-              <div class="allowance-row">
-                <div class="allowance-copy">
-                  <span>Tutor questions</span>
-                  <strong id="rail-tutor-usage">
-                    {% if subscription.usage.tutor.limit is none %}
-                      {{ subscription.usage.tutor.used }} used · unlimited
-                    {% else %}
-                      {{ subscription.usage.tutor.used }} / {{ subscription.usage.tutor.limit }} used
-                    {% endif %}
-                  </strong>
-                </div>
-                <div class="usage-track" role="progressbar" aria-label="Tutor questions used today" aria-valuemin="0" aria-valuemax="{{ subscription.usage.tutor.limit or 100 }}" aria-valuenow="{{ [subscription.usage.tutor.used, subscription.usage.tutor.limit or 100]|min }}" aria-valuetext="{% if subscription.usage.tutor.limit is none %}{{ subscription.usage.tutor.used }} used; unlimited{% else %}{{ subscription.usage.tutor.used }} of {{ subscription.usage.tutor.limit }} used{% endif %}">
-                  <span id="rail-tutor-bar" style="width: {{ 0 if subscription.usage.tutor.limit is none else (100 * subscription.usage.tutor.used / subscription.usage.tutor.limit)|round(0, 'floor') }}%"></span>
-                </div>
-              </div>
-              <div class="allowance-row">
-                <div class="allowance-copy">
-                  <span>Practice answers</span>
-                  <strong id="rail-practice-usage">
-                    {% if subscription.usage.practice.limit is none %}
-                      {{ subscription.usage.practice.used }} answered · unlimited
-                    {% else %}
-                      {{ subscription.usage.practice.used }} / {{ subscription.usage.practice.limit }} answered
-                    {% endif %}
-                  </strong>
-                </div>
-                <div class="usage-track" role="progressbar" aria-label="Practice answers used today" aria-valuemin="0" aria-valuemax="{{ subscription.usage.practice.limit or 100 }}" aria-valuenow="{{ [subscription.usage.practice.used, subscription.usage.practice.limit or 100]|min }}" aria-valuetext="{% if subscription.usage.practice.limit is none %}{{ subscription.usage.practice.used }} answered; unlimited{% else %}{{ subscription.usage.practice.used }} of {{ subscription.usage.practice.limit }} answered{% endif %}">
-                  <span id="rail-practice-bar" style="width: {{ 0 if subscription.usage.practice.limit is none else (100 * subscription.usage.practice.used / subscription.usage.practice.limit)|round(0, 'floor') }}%"></span>
-                </div>
-              </div>
-            </div>
-            <a class="side-card-link" href="/plans">View plans and limits <span aria-hidden="true">→</span></a>
-          </article>
-        </aside>
       </section>
     </main>
   </div>

@@ -403,17 +403,7 @@ def inject_csrf_token():
 
 
 def get_ai_provider():
-    provider = os.environ.get("STUDYAI_PROVIDER", "").strip().lower()
-    if provider:
-        return provider
-    if os.environ.get("AIMLAPI_API_KEY"):
-        return "aimlapi"
-    if os.environ.get("GEMINI_API_KEY"):
-        return "gemini"
-    if os.environ.get("GROQ_API_KEY"):
-        return "groq"
-    if os.environ.get("OPENAI_API_KEY"):
-        return "openai"
+    # Keep every AI feature on the local model so pages behave consistently.
     return "ollama"
 
 
@@ -1304,6 +1294,9 @@ def grade():
 
 
 
+init_db()
+
+
 # Seed confidential developer account (override via env).
 dev_email = os.environ.get("DEV_EMAIL", "developer@studyai.local")
 dev_password = os.environ.get("DEV_PASSWORD", "DevAccess#2026!")
@@ -1314,10 +1307,6 @@ with get_db() as connection:
             "INSERT INTO users (email, password_hash, school_class, board, plan) VALUES (?, ?, ?, ?, ?)",
             (dev_email, generate_password_hash(dev_password, method="pbkdf2:sha256:600000"), "Other", "Other", "PRO"),
         )
-
-init_db()
-
-
 if __name__ == "__main__":
     debug_enabled = (
         os.environ.get("STUDYAI_ENV", "development").lower() == "development"

@@ -372,6 +372,10 @@ promptChips.forEach((chip) => {
 });
 
 const studyForm = byId("ask-form");
+function enterConversationMode() {
+  document.body.classList.add("conversation-mode");
+}
+
 if (studyForm) {
   studyForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -382,6 +386,7 @@ if (studyForm) {
       return;
     }
     const button = event.currentTarget.querySelector("button[type=submit]");
+    enterConversationMode();
     appendChatMessage("user", question);
     if (askQuestionInput) {
       askQuestionInput.value = "";
@@ -841,19 +846,24 @@ async function refreshDashboard() {
     if (!response.ok) throw new Error("Couldn't load your progress.");
     const data = await response.json();
     renderSubscription(data.subscription);
-    byId("topics-studied").textContent = data.topics_studied;
-    byId("questions-asked").textContent = data.questions_asked;
-    byId("practice-accuracy").textContent = `${data.accuracy}%`;
+    const topicsStudied = byId("topics-studied");
+    const questionsAsked = byId("questions-asked");
+    const practiceAccuracy = byId("practice-accuracy");
+    if (topicsStudied) topicsStudied.textContent = data.topics_studied;
+    if (questionsAsked) questionsAsked.textContent = data.questions_asked;
+    if (practiceAccuracy) practiceAccuracy.textContent = `${data.accuracy}%`;
     const accuracyBar = byId("accuracy-bar");
-    accuracyBar.style.width = `${data.accuracy}%`;
-    const accuracyProgress = accuracyBar.parentElement;
-    accuracyProgress.setAttribute("aria-valuenow", String(data.accuracy));
-    accuracyProgress.setAttribute(
-      "aria-valuetext",
-      data.practice_total
-        ? `${data.accuracy}% accuracy across ${data.practice_total} answers`
-        : "No practice completed yet",
-    );
+    if (accuracyBar) {
+      accuracyBar.style.width = `${data.accuracy}%`;
+      const accuracyProgress = accuracyBar.parentElement;
+      accuracyProgress.setAttribute("aria-valuenow", String(data.accuracy));
+      accuracyProgress.setAttribute(
+        "aria-valuetext",
+        data.practice_total
+          ? `${data.accuracy}% accuracy across ${data.practice_total} answers`
+          : "No practice completed yet",
+      );
+    }
     const masteryRing = byId("mastery-ring");
     if (masteryRing) {
       masteryRing.style.setProperty("--value", String(data.accuracy));
